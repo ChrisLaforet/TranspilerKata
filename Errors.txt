@@ -1,0 +1,18 @@
+
+EXPRESSION: (12,ab)c
+expected:<[]> but was:<[(12,ab)]>
+
+EXPRESSION: a b c
+expected:<[]> but was:<[ab]>
+
+EXPRESSION: f( a v)
+expected:<[]> but was:<[f(av)]>
+
+EXPRESSION: run(a){as we can}
+expected:<run(a,(){as;we;can;})> but was:<run(a,(as,we){can;})>
+
+EXPRESSION: {a->a}(cde,y,z){x,y,d -> stuff}  
+expected:<(a){a;}(cde,y,z,(x,y,d){stuff;})> but was:<(a){a;}(cde,y,z)(x,y,d){stuff;}> 
+
+EXPRESSION: {}{}{}
+expected:<[]> but was:<[(){}(){}(){}]>
