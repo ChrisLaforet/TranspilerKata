@@ -87,6 +87,12 @@ public class TranspilerTest {
     }  
     
     @Test
+    public void testWhen_function_has_lambda_argument() {
+    	fromTo("fun {a -> a}", "fun((a){a;})");
+    	fromTo("fun { a, b -> a b }", "fun((a,b){a;b;})");
+    }
+    
+    @Test
     public void testExtended1() {
         fromTo ("(12,ab)c", "");
     }

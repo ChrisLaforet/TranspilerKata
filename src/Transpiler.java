@@ -60,9 +60,14 @@ public class Transpiler {
 	static private Token tokenizeLambda(List<Token> tokens) {
 		final Lambda lambda = new Lambda();
 		if (!tokens.isEmpty()) {
+			
+			boolean hasArrow = tokens.stream().anyMatch(token -> token.getTokenType() == Token.TOKEN_ARROW);
+			
 			int index = 0;
 			Token token = tokens.get(index++);
-			while (token.getTokenType() != Token.TOKEN_ARROW && index < tokens.size()) {
+			while (hasArrow && 
+					token.getTokenType() != Token.TOKEN_ARROW && 
+					index < tokens.size()) {
 				if (token.getTokenType() == Token.TOKEN_NAME || token.getTokenType() == Token.TOKEN_NUMBER) {
 					lambda.addParam(token.getToken().toString());
 				} else if (token.getTokenType() != Token.TOKEN_COMMA) {
