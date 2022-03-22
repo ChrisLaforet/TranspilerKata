@@ -144,6 +144,9 @@ public class Transpiler {
 		emitter.emit("(");
 		processParameters(emitter);
 		emitter.emit(")");
+		if (emitter.peekNext() != null) {
+			throw new IllegalStateException("A function cannot be followed by anything other than a lambda");
+		}
 		return emitter.toString();
 	}
 	
@@ -403,6 +406,12 @@ public class Transpiler {
 							throw new IllegalStateException("Malformed arrow token");
 						}
 				}
+			}
+			
+			if (tokenType == Token.TOKEN_ARROW) {
+				throw new IllegalStateException("Malformed arrow token");
+			} else if (tokenType == Token.TOKEN_NAME || tokenType == Token.TOKEN_NUMBER) {
+				emitToken(tokenType, token.toString());
 			}
 			
 			if (!pairMatching.isEmpty()) {
