@@ -370,7 +370,7 @@ public class Transpiler {
 							tokenType = Token.TOKEN_NUMBER;
 							token.append(ch);
 						} else if (ch == '-') {
-							if (lastTokenType != Token.TOKEN_NAME && lastTokenType != Token.TOKEN_NAME) {
+							if (lastTokenType != Token.TOKEN_NAME && lastTokenType != Token.TOKEN_NUMBER) {
 								throw new IllegalStateException("Arrow must follow name or number");
 							}
 							tokenType = Token.TOKEN_ARROW;
