@@ -84,5 +84,35 @@ public class TranspilerTest {
     public void testWhen_invoking_a_lambda_directly () {
         fromTo ("{}()", "(){}()");
         fromTo ("{a->a}(233)", "(a){a;}(233)");
-    }    
+    }  
+    
+    @Test
+    public void testExtended1() {
+        fromTo ("(12,ab)c", "");
+    }
+    
+    @Test
+    public void testExtended2() {
+        fromTo ("a b c", "");
+    }
+    
+    @Test
+    public void testExtended3() {
+        fromTo ("f( a v)", "");
+    }
+    
+    @Test
+    public void testExtended4() {
+        fromTo ("run(a){as we can}", "run(a,(){as;we;can;})> but was:<run(a,(as,we){can;})");
+    }
+    
+    @Test
+    public void testExtended5() {
+        fromTo ("{a->a}(cde,y,z){x,y,d -> stuff}", "(a){a;}(cde,y,z,(x,y,d){stuff;})");
+    }
+    
+    @Test
+    public void testExtended6() {
+        fromTo ("{}{}{}", "");
+    }
 }
