@@ -93,6 +93,16 @@ public class TranspilerTest {
     }
     
     @Test
+    public void testWhen_lambdaIsFunction_withArgument() {
+    	fromTo("{a -> a}(1)", "(a){a;}(1)");
+    }
+    
+    @Test
+    public void testWhen_emptyLambdaIsFunction_withEmptyLambdaArgument() {
+    	fromTo("{}{}", "(){}((){})");
+    }
+    
+    @Test
     public void testExtended1() {
         fromTo ("(12,ab)c", "");
     }

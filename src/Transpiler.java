@@ -8,15 +8,15 @@ public class Transpiler {
 	public static String transpile(String expression) {
 		try {
 			final List<Token> tokens = Tokenizer.tokenize(expression);
-			processLambdaExpressions(tokens);
-			processFunctionalExpression(tokens);
-			return tokens.stream().map(token -> token.getToken().toString()).collect(Collectors.joining());
+			coalesceLambdaExpressions(tokens);
+			ingestTrailingLambdaExpressions(tokens);
+			return processFunction(tokens);
 		} catch (Exception ex) {
 			return "";
 		}
 	}
 	
-	private static void processLambdaExpressions(List<Token> tokens) {
+	private static void coalesceLambdaExpressions(List<Token> tokens) {
 		boolean hasLambda = false;
 		for (Token token : tokens) {
 			if (token.getTokenType() == Token.TOKEN_OPENCURLY) {
@@ -95,48 +95,198 @@ public class Transpiler {
 		return new Token(Token.TOKEN_LAMBDA, lambda);
 	}
 	
-	static private void processFunctionalExpression(List<Token> tokens) {
-		if (tokens.size() <= 1) {
+	static private void ingestTrailingLambdaExpressions(List<Token> tokens) {
+		// handle this src format: function ::= expression "(" [parameters] ")" lambda
+		if (tokens.size() < 4 ||
+				!tokens.stream().anyMatch(token -> token.getTokenType() == Token.TOKEN_LAMBDA)) {
 			return;
 		}
 		
-		int index = 0;
-		Token token = tokens.get(index++);
-		if (token.getTokenType() != Token.TOKEN_NAME && token.getTokenType() != Token.TOKEN_NUMBER) {
+		int penultimate = tokens.size() - 2;
+		final Token penultimateToken = tokens.get(penultimate);
+		final Token lastToken = tokens.get(penultimate + 1);
+		
+		
+		if (penultimateToken.getTokenType() != Token.TOKEN_CLOSEPAREN ||
+				lastToken.getTokenType() != Token.TOKEN_LAMBDA) {
 			return;
 		}
-
+		
 		final List<Token> updatedTokens = new ArrayList<>();
-		updatedTokens.add(token);
-		
-		token = tokens.get(index++);
-		if (token.getTokenType() == Token.TOKEN_LAMBDA) {
-			updatedTokens.add(new Token(Token.TOKEN_OPENPAREN, "("));
-			updatedTokens.add(token);
-			updatedTokens.add(new Token(Token.TOKEN_CLOSEPAREN, ")"));
-			
-			for ( ; index < tokens.size(); index++) {
-				updatedTokens.add(tokens.get(index));
-			}
-		} else if (token.getTokenType() == Token.TOKEN_OPENPAREN &&
-				tokens.get(tokens.size() - 1).getTokenType() == Token.TOKEN_LAMBDA) {
-			updatedTokens.add(token);
-			for ( ; index < tokens.size() - 2; index++) {
-				token = tokens.get(index);
-				updatedTokens.add(token);
-			}
-			if (token.getTokenType() != Token.TOKEN_OPENPAREN) {
-				updatedTokens.add(new Token(Token.TOKEN_COMMA, ","));
-			}
-			updatedTokens.add(tokens.get(index + 1));	// suck lambda into functional expression			
-			updatedTokens.add(tokens.get(index));
-		} else {
-			return;
+		Token currentToken = null;
+		for (int index = 0; index < penultimate; index++) {
+			currentToken = tokens.get(index);
+			updatedTokens.add(currentToken);
 		}
+		if (currentToken.getTokenType() != Token.TOKEN_OPENPAREN) {
+			updatedTokens.add(new Token(Token.TOKEN_COMMA, ","));
+		}
+		updatedTokens.add(lastToken);		// flip behavior
+		updatedTokens.add(penultimateToken);
 		
-
 		tokens.clear();
 		tokens.addAll(updatedTokens);
+	}
+	
+	static private String processFunction(List<Token> tokens) {
+		final FunctionEmitter emitter = new FunctionEmitter(tokens);
+		
+		final Token token = emitter.getNext();
+		processExpression(emitter, token);
+		
+		final Token nextToken = emitter.peekNext();
+		if (nextToken == null && token.getTokenType() != Token.TOKEN_LAMBDA) {
+			throw new IllegalStateException("A function name cannot stand alone");
+		} else if (nextToken.getTokenType() == Token.TOKEN_NAME || 
+				nextToken.getTokenType() == Token.TOKEN_NUMBER) {
+			throw new IllegalStateException("A function cannot be followed by another name or number");
+		}
+		
+		// function ::= expression "(" [parameters] ")"
+
+		emitter.emit("(");
+		processParameters(emitter);
+		emitter.emit(")");
+		return emitter.toString();
+	}
+	
+	static private void processExpression(FunctionEmitter emitter, Token token) {
+		// expression ::= nameOrNumber | lambda
+		if (token == null || (token.getTokenType() != Token.TOKEN_NAME && 
+				token.getTokenType() != Token.TOKEN_NUMBER && 
+				token.getTokenType() != Token.TOKEN_LAMBDA)) {
+			throw new IllegalStateException("Invalid token for function");
+		}
+		emitter.emit(token);
+	}
+	
+	static private void processParameters(FunctionEmitter emitter) {
+		emitter.swallowTokenIfMatchesType(Token.TOKEN_OPENPAREN);
+		boolean expressionExpected = true;
+		while (true) {
+			final Token token = emitter.getNext();
+			if (token == null || token.getTokenType() == Token.TOKEN_CLOSEPAREN) {
+				break;
+			}
+			if (token.getTokenType() == Token.TOKEN_COMMA) {
+				if (expressionExpected) {
+					throw new IllegalStateException("Invalid position for comma in parameter list");
+				}
+				emitter.emit(token);
+				expressionExpected = true;
+			} else if (expressionExpected) {
+				processExpression(emitter, token);
+				expressionExpected = false;
+			} else {
+				throw new IllegalStateException("Invalid order of parameters and commas");
+			}
+		}
+	}
+//	
+//		Token token = tokens.get(0);
+//		if (token.getTokenType() != Token.TOKEN_NAME && 
+//				token.getTokenType() != Token.TOKEN_NUMBER && 
+//				token.getTokenType() != Token.TOKEN_LAMBDA) {
+//			throw new IllegalStateException("Invalid token for function");
+//		}
+//		
+//		final StringBuilder sb = new StringBuilder();
+//		sb.append(token.toString());
+//		
+//		
+//		
+//		
+//		return sb.toString();
+//	}
+//	
+//	static private String processLambdaExpression(Token token, List<Token> tokens) {
+//		
+//	}
+//		
+//	void x() {
+//		int index = 0;
+//		Token token = tokens.get(index++);
+//		if (token.getTokenType() != Token.TOKEN_NAME && token.getTokenType() != Token.TOKEN_NUMBER) {
+//			return;
+//		}
+//
+//		final List<Token> updatedTokens = new ArrayList<>();
+//		updatedTokens.add(token);
+//		
+//		token = tokens.get(index++);
+//		if (token.getTokenType() == Token.TOKEN_LAMBDA) {
+//			updatedTokens.add(new Token(Token.TOKEN_OPENPAREN, "("));
+//			updatedTokens.add(token);
+//			updatedTokens.add(new Token(Token.TOKEN_CLOSEPAREN, ")"));
+//			
+//			for ( ; index < tokens.size(); index++) {
+//				updatedTokens.add(tokens.get(index));
+//			}
+//		} else if (token.getTokenType() == Token.TOKEN_OPENPAREN &&
+//				tokens.get(tokens.size() - 1).getTokenType() == Token.TOKEN_LAMBDA) {
+//			updatedTokens.add(token);
+//			for ( ; index < tokens.size() - 2; index++) {
+//				token = tokens.get(index);
+//				updatedTokens.add(token);
+//			}
+//			if (token.getTokenType() != Token.TOKEN_OPENPAREN) {
+//				updatedTokens.add(new Token(Token.TOKEN_COMMA, ","));
+//			}
+//			updatedTokens.add(tokens.get(index + 1));	// suck lambda into functional expression			
+//			updatedTokens.add(tokens.get(index));
+//		} else {
+//			return;
+//		}
+//		
+//
+//		tokens.clear();
+//		tokens.addAll(updatedTokens);
+//	}
+	
+	static class FunctionEmitter {
+		private StringBuilder sb = new StringBuilder();
+		private int index = 0;
+		private List<Token> tokens;
+		
+		public FunctionEmitter(List<Token> tokens) {
+			this.tokens = tokens;
+		}
+		
+		public Token peekNext() {
+			if (index >= tokens.size() ) {
+				return null;
+			}
+			return tokens.get(index);
+		}
+		
+		public Token getNext() {
+			final Token token = peekNext();
+			if (token != null) {
+				++index;
+			}
+			return token;			
+		}
+		
+		public void swallowTokenIfMatchesType(int tokenType) {
+			final Token token = peekNext();
+			if (token != null && token.getTokenType() == tokenType) {
+				++index;
+			}
+			
+		}
+		
+		public void emit(String element) {
+			sb.append(element);
+		}
+		
+		public void emit(Token token) {
+			sb.append(token.getToken().toString());
+		}
+		
+		@Override
+		public String toString() {
+			return sb.toString();
+		}
 	}
 	
 	static class Lambda {
@@ -156,6 +306,7 @@ public class Transpiler {
 		
 		@Override
 		public String toString() {
+			// lambda ::= "(" [lambdaparam] "){" [lambdastmt] "}"
 			final StringBuilder sb = new StringBuilder();
 			sb.append("(");
 			if (!params.isEmpty()) {
