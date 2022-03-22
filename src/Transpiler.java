@@ -62,12 +62,22 @@ public class Transpiler {
 			
 			int index = 0;
 			Token token = tokens.get(index++);
+			boolean nameOrNumberExpected = true;
 			while (hasArrow && 
 					token.getTokenType() != Token.TOKEN_ARROW && 
 					index < tokens.size()) {
 				if (token.getTokenType() == Token.TOKEN_NAME || token.getTokenType() == Token.TOKEN_NUMBER) {
+					if (!nameOrNumberExpected) {
+						throw new IllegalStateException("Comma expected instead of NameOrNumber");
+					}
 					lambda.addParam(token.getToken().toString());
-				} else if (token.getTokenType() != Token.TOKEN_COMMA) {
+					nameOrNumberExpected = false;
+				} else if (token.getTokenType() == Token.TOKEN_COMMA) {
+					if (nameOrNumberExpected) {
+						throw new IllegalStateException("NameOrNumber expected instead of comma");
+					}
+					nameOrNumberExpected = true;
+				} else {
 					throw new IllegalStateException("Invalid token in lambda");
 				}
 				token = tokens.get(index++);
