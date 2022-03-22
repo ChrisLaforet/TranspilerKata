@@ -108,6 +108,11 @@ public class TranspilerTest {
     }
     
     @Test
+    public void testExtended1a() {
+        fromTo ("f(12,ab)c", "");
+    }
+    
+    @Test
     public void testExtended2() {
         fromTo ("a b c", "");
     }
@@ -119,7 +124,7 @@ public class TranspilerTest {
     
     @Test
     public void testExtended4() {
-        fromTo ("run(a){as we can}", "run(a,(){as;we;can;})> but was:<run(a,(as,we){can;})");
+        fromTo ("run(a){as we can}", "run(a,(){as;we;can;})");
     }
     
     @Test
@@ -130,5 +135,17 @@ public class TranspilerTest {
     @Test
     public void testExtended6() {
         fromTo ("{}{}{}", "");
+    }
+    
+    
+    @Test
+    public void testExtended7() {
+        fromTo ("{a->a}(cde,y,z){x y d -> stuff}", "");
+    }
+     
+    @Test
+    public void testExtended8() {
+        fromTo ("{eJDpS5vN   GTZEp    WyF3rAq } ({kp3bl  ,J4tFQ0,d1WEgp3 , 527  ->YUOAxY   Wnk pz0    58564004    5524    51159450    kSMQRD} , ts  ,QprPxOmd  ) {X7esinm,  3105,  HcKyUu0,A  , 423894  ,rT_E15  ->bYr    725 tTOz     61876214    WfcOt     43   791  }", 
+        		"(){eJDpS5vN;GTZEp;WyF3rAq;}((kp3bl,J4tFQ0,d1WEgp3,527){YUOAxY;Wnk;pz0;58564004;5524;51159450;kSMQRD;},ts,QprPxOmd,(X7esinm,3105,HcKyUu0,A,423894,rT_E15){bYr;725;tTOz;61876214;WfcOt;43;791;})");
     }
 }

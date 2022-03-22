@@ -32,9 +32,6 @@ public class Transpiler {
 		for (int index = 0; index < tokens.size(); ) {
 			Token token = tokens.get(index++);
 			if (token.getTokenType() == Token.TOKEN_OPENCURLY) {
-//				if (lambdaToken != null) {
-//					throw new IllegalStateException("Only one lambda is permitted per input");
-//				}
 				final List<Token> lambdaTokens = new ArrayList<>();
 				do {
 					token = tokens.get(index++);
@@ -182,66 +179,6 @@ public class Transpiler {
 			}
 		}
 	}
-//	
-//		Token token = tokens.get(0);
-//		if (token.getTokenType() != Token.TOKEN_NAME && 
-//				token.getTokenType() != Token.TOKEN_NUMBER && 
-//				token.getTokenType() != Token.TOKEN_LAMBDA) {
-//			throw new IllegalStateException("Invalid token for function");
-//		}
-//		
-//		final StringBuilder sb = new StringBuilder();
-//		sb.append(token.toString());
-//		
-//		
-//		
-//		
-//		return sb.toString();
-//	}
-//	
-//	static private String processLambdaExpression(Token token, List<Token> tokens) {
-//		
-//	}
-//		
-//	void x() {
-//		int index = 0;
-//		Token token = tokens.get(index++);
-//		if (token.getTokenType() != Token.TOKEN_NAME && token.getTokenType() != Token.TOKEN_NUMBER) {
-//			return;
-//		}
-//
-//		final List<Token> updatedTokens = new ArrayList<>();
-//		updatedTokens.add(token);
-//		
-//		token = tokens.get(index++);
-//		if (token.getTokenType() == Token.TOKEN_LAMBDA) {
-//			updatedTokens.add(new Token(Token.TOKEN_OPENPAREN, "("));
-//			updatedTokens.add(token);
-//			updatedTokens.add(new Token(Token.TOKEN_CLOSEPAREN, ")"));
-//			
-//			for ( ; index < tokens.size(); index++) {
-//				updatedTokens.add(tokens.get(index));
-//			}
-//		} else if (token.getTokenType() == Token.TOKEN_OPENPAREN &&
-//				tokens.get(tokens.size() - 1).getTokenType() == Token.TOKEN_LAMBDA) {
-//			updatedTokens.add(token);
-//			for ( ; index < tokens.size() - 2; index++) {
-//				token = tokens.get(index);
-//				updatedTokens.add(token);
-//			}
-//			if (token.getTokenType() != Token.TOKEN_OPENPAREN) {
-//				updatedTokens.add(new Token(Token.TOKEN_COMMA, ","));
-//			}
-//			updatedTokens.add(tokens.get(index + 1));	// suck lambda into functional expression			
-//			updatedTokens.add(tokens.get(index));
-//		} else {
-//			return;
-//		}
-//		
-//
-//		tokens.clear();
-//		tokens.addAll(updatedTokens);
-//	}
 	
 	static class FunctionEmitter {
 		private StringBuilder sb = new StringBuilder();
